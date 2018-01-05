@@ -739,7 +739,7 @@ def get_apps_from_entities(instances, account, region):
     return applications
 
 
-def get_limits(region, acc, apps, elbs, entities):
+def get_limits(region, acc, apps, elbs, previous):
     limits = {
         'ec2-max-instances': 20,
         'ec2-used-instances': len([a for a in apps if a['type'] == 'instance' and not a.get('spot_instance', False)]),
@@ -748,12 +748,15 @@ def get_limits(region, acc, apps, elbs, entities):
         'elb-max-count': 20,
         'elb-used-count': len(elbs),
     }
+    for k in previous:
+        if k.startswith('ec2-') or k.startswith('iam-') or k.startswith('rds-') or k.startswith('elb-'):
+            limits[k] = previous[k]
+
     ec2 = boto3.client('ec2', region_name=region)
     rds = boto3.client('rds', region_name=region)
     asg = boto3.client('autoscaling', region_name=region)
     iam = boto3.client('iam', region_name=region)
 
-    use_previous_ec2_max_instances = False
     try:
         attrs = ec2.describe_account_attributes()['AccountAttributes']
         for attr in attrs:
@@ -761,7 +764,6 @@ def get_limits(region, acc, apps, elbs, entities):
                 limits['ec2-max-instances'] = int(attr['AttributeValues'][0]['AttributeValue'])
     except Exception:
         logger.exception('Failed to query EC2 account attributes!')
-        use_previous_ec2_max_instances = True
 
     try:
         quota_names = ('ReservedDBInstances', 'AllocatedStorage')
@@ -806,13 +808,8 @@ def get_limits(region, acc, apps, elbs, entities):
         'region': region,
         'infrastructure_account': acc,
     }
-    entity.update(limits)
 
-    if use_previous_ec2_max_instances:
-        for ent in entities:
-            if ent.get('id') == entity.get('id'):
-                entity['ec2-max-instances'] = ent['ec2-max-instances']
-                break
+    entity.update(limits)
 
     return entity
 
