@@ -505,10 +505,11 @@ def test_aws_get_limits(monkeypatch, fail):
     ]
     elbs = [{'type': 'elb'}, {'type': 'elb'}, {'type': 'elb'}]
 
-    limits = aws.get_limits(REGION, ACCOUNT, apps, elbs, {
+    limits = aws.get_limits(REGION, ACCOUNT, apps, elbs, [{
         'id': aws.entity_id('aws-limits[{}:{}]'.format(ACCOUNT, REGION)),
+        'type': 'aws_limits',
         'ec2-max-instances': 40,
-        })
+        }])
 
     if not fail:
         expected = {

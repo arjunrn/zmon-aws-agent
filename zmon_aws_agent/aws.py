@@ -739,7 +739,7 @@ def get_apps_from_entities(instances, account, region):
     return applications
 
 
-def get_limits(region, acc, apps, elbs, previous):
+def get_limits(region, acc, apps, elbs, entities):
     limits = {
         'ec2-max-instances': 20,
         'ec2-used-instances': len([a for a in apps if a['type'] == 'instance' and not a.get('spot_instance', False)]),
@@ -748,9 +748,10 @@ def get_limits(region, acc, apps, elbs, previous):
         'elb-max-count': 20,
         'elb-used-count': len(elbs),
     }
-    for k in previous:
-        if k.startswith('ec2-') or k.startswith('iam-') or k.startswith('rds-') or k.startswith('elb-'):
-            limits[k] = previous[k]
+    for e in entities:
+        if e.get('type') == 'aws_limits':
+            limits.update(e)
+            break
 
     ec2 = boto3.client('ec2', region_name=region)
     rds = boto3.client('rds', region_name=region)

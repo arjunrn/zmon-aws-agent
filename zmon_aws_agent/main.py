@@ -81,15 +81,6 @@ def add_new_entities(all_current_entities, existing_entities, zmon_client, json=
     return new_entities, error_count
 
 
-def get_previous_limits(zmon, region, acc):
-    query = {'type': 'aws_limits',
-             'infrastructure_account': acc,
-             'region': region,
-             'created_by': 'agent'}
-    prev_limits = zmon.get_entities(query)
-    return prev_limits[0] if len(prev_limits) else {}
-
-
 def main():
     argp = argparse.ArgumentParser(description='ZMON AWS Agent')
     argp.add_argument('-e', '--entity-service', dest='entityservice')
@@ -168,8 +159,7 @@ def main():
         elasticaches = aws.get_elasticache_nodes(region, infrastructure_account)
         dynamodbs = aws.get_dynamodb_tables(region, infrastructure_account)
         certificates = aws.get_certificates(region, infrastructure_account)
-        aws_limits = aws.get_limits(region, infrastructure_account, apps, elbs,
-                                    get_previous_limits(zmon_client, region, infrastructure_account))
+        aws_limits = aws.get_limits(region, infrastructure_account, apps, elbs, entities)
         sqs = aws.get_sqs_queues(region, infrastructure_account, entities)
         postgresql_clusters = postgresql.get_postgresql_clusters(region, infrastructure_account,
                                                                  scaling_groups, apps)
