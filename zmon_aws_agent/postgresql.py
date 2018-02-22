@@ -4,6 +4,7 @@ import boto3
 import yaml
 import base64
 import traceback
+import os
 
 # better move that one to common?
 from zmon_aws_agent.aws import entity_id
